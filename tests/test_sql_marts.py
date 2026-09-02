@@ -6,52 +6,21 @@ Docker is unavailable so the rest of the suite still runs.
 
 from __future__ import annotations
 
-import shutil
-
 import numpy as np
 import pandas as pd
 import pytest
 
-from fraudlake.features.sql_runner import fetch_df, run_sql_dir
-from fraudlake.ingest.bronze import build_bronze
-from fraudlake.ingest.load_pg import load_silver_to_postgres
-from fraudlake.ingest.silver import build_silver
+from fraudlake.features.sql_runner import fetch_df
 
 pytestmark = [pytest.mark.postgres, pytest.mark.spark]
-
-docker_missing = shutil.which("docker") is None
-
-
-@pytest.fixture(scope="module")
-def pg_dsn():
-    if docker_missing:
-        pytest.skip("docker not available")
-    from testcontainers.postgres import PostgresContainer
-
-    with PostgresContainer("postgres:16-alpine", driver=None) as pg:
-        yield pg.get_connection_url()
-
-
-@pytest.fixture(scope="module")
-def warehouse(spark, settings, pg_dsn):
-    build_bronze(spark, settings)
-    build_silver(spark, settings)
-    s = settings.model_copy(update={
-        "pg_host": pg_dsn.split("@")[1].split(":")[0],
-        "pg_port": int(pg_dsn.split(":")[-1].split("/")[0]),
-        "pg_db": pg_dsn.rsplit("/", 1)[1],
-        "pg_user": pg_dsn.split("//")[1].split(":")[0],
-        "pg_password": pg_dsn.split(":")[2].split("@")[0],
-    })
-    n = load_silver_to_postgres(s)
-    run_sql_dir(s)
-    return s, n
 
 
 def test_load_row_count(warehouse):
     s, n = warehouse
     assert n == 2_400
-    df = fetch_df(s.pg_dsn, "SELECT COUNT(*) AS n, COUNT(DISTINCT transaction_id) AS d FROM raw.transactions")
+    df = fetch_df(
+        s.pg_dsn, "SELECT COUNT(*) AS n, COUNT(DISTINCT transaction_id) AS d FROM raw.transactions"
+    )
     assert df.loc[0, "n"] == df.loc[0, "d"] == 2_400
 
 
@@ -84,7 +53,9 @@ def test_sql_velocity_matches_spark_velocity(warehouse):
         assert np.allclose(df[f"spk_amt_{w}"], df[f"vel_amt_{w}"]), w
     assert (df["spk_card_txn_idx"] == df["card_txn_idx"]).all()
     pd.testing.assert_series_equal(
-        df["spk_secs_since_prev"].astype("float"), df["secs_since_prev"].astype("float"), check_names=False
+        df["spk_secs_since_prev"].astype("float"),
+        df["secs_since_prev"].astype("float"),
+        check_names=False,
     )
 
 
@@ -98,12 +69,16 @@ def test_amount_stats_never_see_current_or_future_rows(warehouse):
     rng = np.random.default_rng(1)
     for i in rng.choice(len(df), size=200, replace=False):
         row = df.iloc[i]
-        prior = df[(df["card_uid"] == row["card_uid"]) & (df["transaction_dt"] < row["transaction_dt"])]
+        prior = df[
+            (df["card_uid"] == row["card_uid"]) & (df["transaction_dt"] < row["transaction_dt"])
+        ]
         assert row["prior_n_txn"] == len(prior)
         assert row["is_first_txn_on_card"] == int(len(prior) == 0)
         if len(prior):
             assert np.isclose(row["prior_amt_mean"], prior["transaction_amt"].mean())
-            assert row["amt_over_prior_max"] == int(row["transaction_amt"] > prior["transaction_amt"].max())
+            assert row["amt_over_prior_max"] == int(
+                row["transaction_amt"] > prior["transaction_amt"].max()
+            )
         else:
             assert pd.isna(row["prior_amt_mean"])
 

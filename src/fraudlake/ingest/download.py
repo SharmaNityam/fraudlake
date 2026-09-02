@@ -31,7 +31,9 @@ def download_raw(settings: Settings, force: bool = False) -> list[Path]:
     try:
         subprocess.run(cmd, check=True)
     except FileNotFoundError as exc:  # pragma: no cover
-        raise RuntimeError("kaggle CLI not found; run `uv sync` and add ~/.kaggle/kaggle.json") from exc
+        raise RuntimeError(
+            "kaggle CLI not found; run `uv sync` and add ~/.kaggle/kaggle.json"
+        ) from exc
     except subprocess.CalledProcessError as exc:  # pragma: no cover
         raise RuntimeError(
             "kaggle download failed. Have you accepted the competition rules at "

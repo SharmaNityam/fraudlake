@@ -53,7 +53,9 @@ def list_sql_files(sql_dir: Path) -> list[SqlFile]:
     return [SqlFile(p) for p in sorted(sql_dir.glob("*.sql"))]
 
 
-def run_sql_dir(settings: Settings, dsn: str | None = None, sql_dir: Path | None = None) -> list[tuple[str, int]]:
+def run_sql_dir(
+    settings: Settings, dsn: str | None = None, sql_dir: Path | None = None
+) -> list[tuple[str, int]]:
     dsn = dsn or settings.pg_dsn
     files = list_sql_files(sql_dir or settings.sql_dir)
     results: list[tuple[str, int]] = []

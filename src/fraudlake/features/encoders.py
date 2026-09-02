@@ -52,7 +52,9 @@ class FrequencyEncoder(BaseEstimator, TransformerMixin):
 
 
 class OOFTargetEncoder(BaseEstimator, TransformerMixin):
-    def __init__(self, columns: list[str], n_splits: int = 5, smoothing: float = 20.0, seed: int = 0):
+    def __init__(
+        self, columns: list[str], n_splits: int = 5, smoothing: float = 20.0, seed: int = 0
+    ):
         self.columns = columns
         self.n_splits = n_splits
         self.smoothing = smoothing
@@ -60,7 +62,11 @@ class OOFTargetEncoder(BaseEstimator, TransformerMixin):
 
     def _encode(self, train_col: pd.Series, y: np.ndarray, apply_col: pd.Series) -> np.ndarray:
         prior = float(np.mean(y))
-        stats = pd.DataFrame({"k": train_col.to_numpy(), "y": y}).groupby("k")["y"].agg(["sum", "count"])
+        stats = (
+            pd.DataFrame({"k": train_col.to_numpy(), "y": y})
+            .groupby("k")["y"]
+            .agg(["sum", "count"])
+        )
         smoothed = (stats["sum"] + prior * self.smoothing) / (stats["count"] + self.smoothing)
         return apply_col.map(smoothed).fillna(prior).to_numpy(dtype="float32")
 
@@ -70,8 +76,12 @@ class OOFTargetEncoder(BaseEstimator, TransformerMixin):
         self.maps_: dict[str, pd.Series] = {}
         for c in self.columns:
             col = _as_str(X[c])
-            stats = pd.DataFrame({"k": col.to_numpy(), "y": y}).groupby("k")["y"].agg(["sum", "count"])
-            self.maps_[c] = (stats["sum"] + self.prior_ * self.smoothing) / (stats["count"] + self.smoothing)
+            stats = (
+                pd.DataFrame({"k": col.to_numpy(), "y": y}).groupby("k")["y"].agg(["sum", "count"])
+            )
+            self.maps_[c] = (stats["sum"] + self.prior_ * self.smoothing) / (
+                stats["count"] + self.smoothing
+            )
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:

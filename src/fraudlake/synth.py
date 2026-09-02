@@ -91,17 +91,25 @@ def make_transactions(
             "card6": rng.choice(CARD6, size=n_rows, p=[0.74, 0.25, 0.01]),
             "addr1": addr1,
             "addr2": addr2,
-            "dist1": np.where(rng.random(n_rows) < 0.6, np.nan, rng.exponential(50, n_rows).round()),
-            "dist2": np.where(rng.random(n_rows) < 0.93, np.nan, rng.exponential(80, n_rows).round()),
+            "dist1": np.where(
+                rng.random(n_rows) < 0.6, np.nan, rng.exponential(50, n_rows).round()
+            ),
+            "dist2": np.where(
+                rng.random(n_rows) < 0.93, np.nan, rng.exponential(80, n_rows).round()
+            ),
             "P_emaildomain": rng.choice(EMAIL_DOMAINS, size=n_rows),
-            "R_emaildomain": rng.choice(EMAIL_DOMAINS, size=n_rows, p=[0.1, 0.05, 0.03, 0.02, 0.02, 0.78]),
+            "R_emaildomain": rng.choice(
+                EMAIL_DOMAINS, size=n_rows, p=[0.1, 0.05, 0.03, 0.02, 0.02, 0.78]
+            ),
         }
     )
     for i in range(1, 15):
-        df[f"C{i}"] = rng.poisson(1.5 + is_fraud * 3, size=n_rows).astype(float)
+        df[f"C{i}"] = rng.poisson(1.5 + is_fraud * 0.4, size=n_rows).astype(float)
     df["D1"] = d1
     for i in range(2, 16):
-        df[f"D{i}"] = np.where(rng.random(n_rows) < 0.5, np.nan, rng.integers(0, 600, n_rows)).astype(float)
+        df[f"D{i}"] = np.where(
+            rng.random(n_rows) < 0.5, np.nan, rng.integers(0, 600, n_rows)
+        ).astype(float)
     for i in range(1, 10):
         df[f"M{i}"] = rng.choice(["T", "F", None], size=n_rows, p=[0.45, 0.35, 0.2])
     v_null = rng.random(339) * 0.9  # per-column null rate

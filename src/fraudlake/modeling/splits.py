@@ -39,7 +39,9 @@ class Fold:
     val_end_dt: int
 
 
-def time_holdout_split(dt: pd.Series, holdout_fraction: float) -> tuple[np.ndarray, np.ndarray, int]:
+def time_holdout_split(
+    dt: pd.Series, holdout_fraction: float
+) -> tuple[np.ndarray, np.ndarray, int]:
     """Split positional indices into (train_window, holdout) by a time cut, not a row cut."""
     if not dt.is_monotonic_increasing:
         raise ValueError("dt must be sorted ascending; sort the frame by TransactionDT first")
@@ -50,9 +52,7 @@ def time_holdout_split(dt: pd.Series, holdout_fraction: float) -> tuple[np.ndarr
     return pos[~is_hold], pos[is_hold], cut
 
 
-def time_series_folds(
-    dt: pd.Series, n_folds: int, gap_seconds: int
-) -> Iterator[Fold]:
+def time_series_folds(dt: pd.Series, n_folds: int, gap_seconds: int) -> Iterator[Fold]:
     """Expanding-window folds over a time-sorted ``dt`` (positional indices).
 
     ``TimeSeriesSplit`` works in row space; we convert the ``gap`` from seconds

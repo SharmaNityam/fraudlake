@@ -95,7 +95,8 @@ class Settings(BaseSettings):
 
     @property
     def mlflow_uri(self) -> str:
-        return self.mlflow_tracking_uri or f"file:{self.artifacts_dir / 'mlruns'}"
+        # sqlite: zero-setup like the file store, but still supported by current MLflow
+        return self.mlflow_tracking_uri or f"sqlite:///{self.artifacts_dir / 'mlflow.db'}"
 
     @property
     def pg_dsn(self) -> str:

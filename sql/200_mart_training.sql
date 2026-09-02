@@ -17,8 +17,8 @@ SELECT
     a.prior_n_txn, a.prior_amt_mean, a.amt_ratio_prior_mean, a.amt_z_prior, a.amt_over_prior_max,
     a.card_age_days, a.is_first_txn_on_card, a.is_new_email_for_card, a.is_new_addr_for_card,
     a.is_new_product_for_card, a.is_new_device_for_card,
-    d.p_email_prior_cnt, d.r_email_prior_cnt, d.device_prior_cnt, d.os_browser_prior_cnt,
-    d.addr1_prior_cnt, d.email_mismatch, d.device_cards_24h
+    d.p_email_prior_share, d.r_email_prior_share, d.device_prior_share, d.os_browser_prior_share,
+    d.addr1_prior_share, d.email_mismatch, d.device_cards_24h
 FROM raw.transactions r
 JOIN feat.fct_velocity      v USING (transaction_id)
 JOIN feat.fct_amount_stats  a USING (transaction_id)

@@ -19,7 +19,9 @@ def test_bronze_writes_partitioned_parquet_with_time_columns(spark, settings, br
     assert df.filter(F.col("source") == "train").count() == 2_000
     assert df.filter(F.col("source") == "test").count() == 400
     # partition directories exist
-    assert any(p.name.startswith("txn_day=") for p in (settings.bronze_dir / "transactions").iterdir())
+    assert any(
+        p.name.startswith("txn_day=") for p in (settings.bronze_dir / "transactions").iterdir()
+    )
 
 
 def test_bronze_types_are_explicit(spark, settings, bronze):

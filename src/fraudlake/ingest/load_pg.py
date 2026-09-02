@@ -65,11 +65,13 @@ def _pg_type(t: pa.DataType) -> str:
 def _ddl(schema: pa.Schema) -> tuple[str, list[str]]:
     cols = [to_pg_name(f.name) for f in schema]
     defs = ", ".join(f'"{c}" {_pg_type(f.type)}' for c, f in zip(cols, schema, strict=True))
-    return f'CREATE TABLE {SCHEMA}.{TABLE} ({defs})', cols
+    return f"CREATE TABLE {SCHEMA}.{TABLE} ({defs})", cols
 
 
 def load_silver_to_postgres(settings: Settings, batch_rows: int = 50_000) -> int:
-    dataset = ds.dataset(str(settings.silver_dir / "transactions"), format="parquet", partitioning="hive")
+    dataset = ds.dataset(
+        str(settings.silver_dir / "transactions"), format="parquet", partitioning="hive"
+    )
     schema = dataset.schema
     create_sql, cols = _ddl(schema)
     col_list = ", ".join(f'"{c}"' for c in cols)
@@ -92,12 +94,12 @@ def load_silver_to_postgres(settings: Settings, batch_rows: int = 50_000) -> int
                     copy.write(sink.getvalue().to_pybytes())
                     total += batch.num_rows
                     console.print(f"  copied {total:,} rows", end="\r")
-            cur.execute(
-                f'CREATE INDEX ON {SCHEMA}.{TABLE} ("card_uid", "transaction_dt")'
-            )
+            cur.execute(f'CREATE INDEX ON {SCHEMA}.{TABLE} ("card_uid", "transaction_dt")')
             cur.execute(f'CREATE UNIQUE INDEX ON {SCHEMA}.{TABLE} ("transaction_id")')
             cur.execute(f'CREATE INDEX ON {SCHEMA}.{TABLE} ("txn_ts")')
             cur.execute(f"ANALYZE {SCHEMA}.{TABLE}")
         conn.commit()
-    console.print(f"\n[green]loaded {total:,} rows into {SCHEMA}.{TABLE} in {time.perf_counter() - t0:.1f}s[/]")
+    console.print(
+        f"\n[green]loaded {total:,} rows into {SCHEMA}.{TABLE} in {time.perf_counter() - t0:.1f}s[/]"
+    )
     return total

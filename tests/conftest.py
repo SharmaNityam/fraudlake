@@ -43,3 +43,44 @@ def spark(settings):
     session = get_spark(settings, app_name="fraudlake-tests")
     yield session
     session.stop()
+
+
+# --- warehouse (Postgres via testcontainers) ---------------------------------------
+
+import shutil  # noqa: E402
+
+docker_missing = shutil.which("docker") is None
+
+
+@pytest.fixture(scope="session")
+def pg_dsn():
+    if docker_missing:
+        pytest.skip("docker not available")
+    from testcontainers.postgres import PostgresContainer
+
+    with PostgresContainer("postgres:16-alpine", driver=None) as pg:
+        yield pg.get_connection_url()
+
+
+@pytest.fixture(scope="session")
+def warehouse(spark, settings, pg_dsn):
+    """Bronze -> silver -> Postgres -> SQL marts, once per session. Returns (settings, n_rows)."""
+    from fraudlake.features.sql_runner import run_sql_dir
+    from fraudlake.ingest.bronze import build_bronze
+    from fraudlake.ingest.load_pg import load_silver_to_postgres
+    from fraudlake.ingest.silver import build_silver
+
+    build_bronze(spark, settings)
+    build_silver(spark, settings)
+    s = settings.model_copy(
+        update={
+            "pg_host": pg_dsn.split("@")[1].split(":")[0],
+            "pg_port": int(pg_dsn.split(":")[-1].split("/")[0]),
+            "pg_db": pg_dsn.rsplit("/", 1)[1],
+            "pg_user": pg_dsn.split("//")[1].split(":")[0],
+            "pg_password": pg_dsn.split(":")[2].split("@")[0],
+        }
+    )
+    n = load_silver_to_postgres(s)
+    run_sql_dir(s)
+    return s, n

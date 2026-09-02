@@ -52,7 +52,7 @@ report: ## Generate model card, feature catalog, README results table
 all: db-up data ingest features select train evaluate report ## Full pipeline end to end
 
 mlflow-ui: ## Open MLflow UI on the local file store
-	$(RUN) mlflow ui --backend-store-uri file:./data/artifacts/mlruns --port 5001
+	$(RUN) mlflow ui --backend-store-uri sqlite:///data/artifacts/mlflow.db --port 5001
 
 clean: ## Remove derived data (keeps raw download)
 	rm -rf data/bronze data/silver data/artifacts
