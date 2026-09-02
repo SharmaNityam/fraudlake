@@ -26,6 +26,7 @@ dependencies = [
     "kaggle>=1.6",
     "rich>=13",
     "matplotlib>=3.9",
+    "setuptools>=70",  # pyspark 3.5 imports distutils; removed in py3.12
 ]
 
 [project.optional-dependencies]

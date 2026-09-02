@@ -51,12 +51,30 @@ def make_transactions(
 
     amt = np.round(np.exp(rng.normal(3.8, 1.0, size=n_rows)), 3)
 
-    # fraud: some cards go "hot" and burst; plus a random background rate
+    # fraud: some cards go "hot" — their transactions cluster into a burst of a few
+    # hours (velocity signal) — plus a random background rate
     hot_cards = rng.choice(n_cards, size=max(1, n_cards // 20), replace=False)
     is_hot = np.isin(card_idx, hot_cards)
     burst = is_hot & (rng.random(n_rows) < 0.6)
+    burst_center = {c: rng.integers(dt.min(), dt.max()) for c in hot_cards}
+    dt = dt.copy()
+    dt[burst] = np.array(
+        [burst_center[c] + rng.integers(0, 3 * 3_600) for c in card_idx[burst]], dtype=np.int64
+    )
     is_fraud = (burst | (rng.random(n_rows) < fraud_rate / 2)).astype(int)
     amt = np.where(is_fraud == 1, np.round(amt * rng.uniform(1.5, 4.0, size=n_rows), 3), amt)
+
+    # re-establish time order (TransactionID is assigned in time order, as on Kaggle)
+    order = np.argsort(dt, kind="stable")
+    dt, card_idx, card1, card2, card3, card5, addr1, addr2, amt, is_fraud = (
+        a[order] for a in (dt, card_idx, card1, card2, card3, card5, addr1, addr2, amt, is_fraud)
+    )
+    txn_day = dt // 86_400
+    # D1 = days since the card was first seen: constant anchor per card (this is what
+    # makes card1||addr1||(day - D1) a usable account fingerprint on the real data)
+    first_day = pd.Series(txn_day).groupby(card_idx).transform("min").to_numpy()
+    d1 = (txn_day - first_day).astype(float)
+    d1[rng.random(n_rows) < 0.05] = np.nan
 
     df = pd.DataFrame(
         {
@@ -81,7 +99,8 @@ def make_transactions(
     )
     for i in range(1, 15):
         df[f"C{i}"] = rng.poisson(1.5 + is_fraud * 3, size=n_rows).astype(float)
-    for i in range(1, 16):
+    df["D1"] = d1
+    for i in range(2, 16):
         df[f"D{i}"] = np.where(rng.random(n_rows) < 0.5, np.nan, rng.integers(0, 600, n_rows)).astype(float)
     for i in range(1, 10):
         df[f"M{i}"] = rng.choice(["T", "F", None], size=n_rows, p=[0.45, 0.35, 0.2])
