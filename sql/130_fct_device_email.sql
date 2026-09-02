@@ -48,8 +48,10 @@ SELECT
     ds.device_cards_24h
 FROM t
 LEFT JOIN LATERAL (
+    -- reads the base table, not the CTE: the CTE is referenced twice so Postgres would
+    -- materialise it and lose the (device_info, transaction_dt) index
     SELECT COUNT(DISTINCT d.card_uid) AS device_cards_24h
-    FROM t d
+    FROM raw.transactions d
     WHERE t.device_info IS NOT NULL
       AND d.device_info = t.device_info
       AND d.card_uid <> t.card_uid
