@@ -16,7 +16,7 @@ from pathlib import Path
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
-from pyspark.sql.types import StructType
+from pyspark.sql.types import StructField, StructType
 from rich.console import Console
 
 from fraudlake.config import REFERENCE_EPOCH, Settings
@@ -129,8 +129,16 @@ def build_bronze(spark: SparkSession, settings: Settings) -> dict[str, dict]:
         if not path.exists():
             continue
         _validate_header(path, expected_columns(identity_schema()), rename_hyphens=True)
-        # read with header names as-is, then normalise, then re-apply typed schema
-        df = normalise_identity_columns(read_csv(spark, path, identity_schema()))
+        schema = identity_schema()
+        with open(path, encoding="utf-8") as fh:
+            if "id-01" in fh.readline():  # kaggle's test file uses hyphens
+                schema = StructType(
+                    [
+                        StructField(f.name.replace("id_", "id-"), f.dataType, f.nullable)
+                        for f in schema.fields
+                    ]
+                )
+        df = normalise_identity_columns(read_csv(spark, path, schema))
         parts.append(df.withColumn("source", F.lit(source)))
     if parts:
         ident = parts[0]

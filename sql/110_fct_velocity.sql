@@ -40,8 +40,8 @@ CROSS JOIN LATERAL (
     SELECT COUNT(DISTINCT p.product_cd) AS n_products_7d
     FROM stg.transactions p
     WHERE p.card_uid = o.card_uid
-      AND p.txn_ts >= o.txn_ts - INTERVAL '7 days'
-      AND p.txn_ts <  o.txn_ts
+      AND p.transaction_dt >= o.transaction_dt - 7 * 86400
+      AND p.transaction_dt <  o.transaction_dt
 ) lp
 WINDOW
     wall AS (PARTITION BY card_uid ORDER BY transaction_dt),

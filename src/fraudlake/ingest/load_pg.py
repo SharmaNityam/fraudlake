@@ -97,6 +97,9 @@ def load_silver_to_postgres(settings: Settings, batch_rows: int = 50_000) -> int
             cur.execute(f'CREATE INDEX ON {SCHEMA}.{TABLE} ("card_uid", "transaction_dt")')
             cur.execute(f'CREATE UNIQUE INDEX ON {SCHEMA}.{TABLE} ("transaction_id")')
             cur.execute(f'CREATE INDEX ON {SCHEMA}.{TABLE} ("txn_ts")')
+            cur.execute(
+                f'CREATE INDEX ON {SCHEMA}.{TABLE} ("device_info", "transaction_dt") WHERE "device_info" IS NOT NULL'
+            )
             cur.execute(f"ANALYZE {SCHEMA}.{TABLE}")
         conn.commit()
     console.print(

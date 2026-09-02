@@ -25,6 +25,21 @@ def data() -> None:
 
 
 @app.command()
+def synth(
+    rows: int = typer.Option(20_000, help="Number of synthetic training transactions"),
+    seed: int = typer.Option(7),
+) -> None:
+    """Write synthetic IEEE-CIS look-alike CSVs into data/raw (demo mode, no Kaggle needed)."""
+    from fraudlake.synth import write_synthetic_raw
+
+    settings = get_settings()
+    settings.ensure_dirs()
+    paths = write_synthetic_raw(settings.raw_dir, n_rows=rows, seed=seed)
+    for name, path in paths.items():
+        console.print(f"[green]{name}[/] -> {path}")
+
+
+@app.command()
 def ingest(
     skip_load: bool = typer.Option(False, help="Skip loading silver into Postgres"),
 ) -> None:

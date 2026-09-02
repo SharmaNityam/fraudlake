@@ -53,8 +53,8 @@ LEFT JOIN LATERAL (
     WHERE t.device_info IS NOT NULL
       AND d.device_info = t.device_info
       AND d.card_uid <> t.card_uid
-      AND d.txn_ts >= t.txn_ts - INTERVAL '24 hours'
-      AND d.txn_ts <  t.txn_ts
+      AND d.transaction_dt >= t.transaction_dt - 86400
+      AND d.transaction_dt <  t.transaction_dt
 ) ds ON TRUE;
 
 CREATE UNIQUE INDEX ON feat.fct_device_email (transaction_id);
