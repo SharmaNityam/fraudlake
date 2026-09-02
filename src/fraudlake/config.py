@@ -44,7 +44,7 @@ class Settings(BaseSettings):
 
     # --- postgres ------------------------------------------------------------
     pg_host: str = "localhost"
-    pg_port: int = 5433
+    pg_port: int = 5439
     pg_db: str = "fraudlake"
     pg_user: str = "fraudlake"
     pg_password: str = "fraudlake"
