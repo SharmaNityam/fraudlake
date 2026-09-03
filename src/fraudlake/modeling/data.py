@@ -74,15 +74,21 @@ def load_training_frame(settings: Settings, refresh: bool = False) -> pd.DataFra
     if cache.exists() and not refresh:
         return pd.read_parquet(cache)
     console.print("[cyan]pulling mart.training from Postgres ...[/]")
+    # COPY -> CSV -> pyarrow: streams instead of materialising 590k x 480 python tuples
     sql = (
         "SELECT * FROM mart.training WHERE source = 'train' ORDER BY transaction_dt, transaction_id"
     )
-    with psycopg.connect(settings.pg_dsn) as conn, conn.cursor() as cur:
-        cur.execute(sql)
-        cols = [d.name for d in cur.description]
-        df = pd.DataFrame.from_records(cur.fetchall(), columns=cols)
-    df = _downcast(df)
     cache.parent.mkdir(parents=True, exist_ok=True)
+    tmp = cache.with_suffix(".csv")
+    with psycopg.connect(settings.pg_dsn) as conn, conn.cursor() as cur, open(tmp, "wb") as fh:
+        with cur.copy(f"COPY ({sql}) TO STDOUT WITH (FORMAT csv, HEADER, NULL '')") as copy:
+            for chunk in copy:
+                fh.write(chunk)
+    import pyarrow.csv as pcsv
+
+    table = pcsv.read_csv(tmp, convert_options=pcsv.ConvertOptions(strings_can_be_null=True))
+    tmp.unlink()
+    df = _downcast(table.to_pandas())
     df.to_parquet(cache, index=False)
     console.print(f"[green]cached {len(df):,} rows x {df.shape[1]} cols -> {cache}[/]")
     return df
