@@ -26,8 +26,29 @@ kaggle csv ──► spark ingest ──► parquet (bronze / silver)
 ## Results
 
 <!-- results:start -->
-_Run `make all` (or see the committed results below once generated)._
+| model | CV PR-AUC (time folds) | holdout PR-AUC | holdout ROC-AUC | precision@1% | recall@1% FPR |
+|---|---|---|---|---|---|
+| **lightgbm** (selected) | 0.6066 ± 0.0201 | 0.5932 [0.5768, 0.6078] | 0.9251 | 0.915 | 0.504 |
+| xgboost | 0.6003 ± 0.0197 | 0.6020 | 0.9163 | 0.924 | 0.529 |
+| catboost | 0.5948 ± 0.0181 | 0.5672 | 0.9151 | 0.896 | 0.492 |
+| rf | 0.5295 ± 0.0255 | 0.5257 | 0.9073 | 0.872 | 0.450 |
+
+| validation scheme | PR-AUC |
+|---|---|
+| shuffled stratified K-fold (the wrong way) | 0.8004 ± 0.0048 |
+| expanding time folds with 1-day gap | 0.6066 ± 0.0201 |
+| untouched time holdout (last 20%) | 0.5932 |
+
+**Optimism gap of a random split: +0.2071 PR-AUC.**
+
+_Holdout = last 20% of time, 104,637 transactions, 3.40% fraud. Model selected by CV before the holdout was opened. Bootstrap 95% CI in brackets. Registry `v1`, git `746b5e3`._
 <!-- results:end -->
+
+![optimism gap](docs/figures/optimism_gap.png)
+
+| | |
+|---|---|
+| ![pr curves](docs/figures/pr_curves.png) | ![shap](docs/figures/shap_beeswarm.png) |
 
 Detailed numbers, operating point and limitations: [`docs/model_card.md`](docs/model_card.md).
 Why the random-split number is not real: [`docs/validation_strategy.md`](docs/validation_strategy.md).
@@ -60,6 +81,8 @@ Stage by stage:
 | `fraudlake train` | Optuna + time-fold CV for each model, MLflow logging | `artifacts/models/<key>/`, `mlflow.db` |
 | `fraudlake evaluate` | holdout metrics, random-vs-time comparison, SHAP, registry | `artifacts/evaluation/`, `artifacts/model/vN/` |
 | `fraudlake report` | model card, feature catalog, README results | `docs/` |
+
+Wall-clock on a 12-core laptop (24 GB): download ~1 min, ingest 1m53s (Spark bronze + silver + Postgres COPY of 1.1M rows), marts 1m40s, selection 4m38s, training ~90 min with a 25-minute Optuna budget per model, evaluation 7m20s.
 
 `make mlflow-ui` opens the experiment tracker; `make test` runs the suite on a synthetic fixture (Spark local, Postgres via testcontainers) without any download.
 

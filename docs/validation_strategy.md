@@ -33,6 +33,8 @@ drift.
 | ...                                                                  |
 ```
 
+![fold layout](figures/fold_layout.png)
+
 - **Holdout = last 20% of time**, cut by timestamp not row count, opened once
   by `fraudlake evaluate` after the model family and hyper-parameters are
   fixed. Model *selection* uses CV; the holdout only quotes the final numbers
@@ -64,8 +66,18 @@ stratified 5-fold on the same training window and reports both numbers side by
 side:
 
 <!-- validation:start -->
-_(run `fraudlake report` to fill this in)_
+| validation scheme | PR-AUC |
+|---|---|
+| shuffled stratified K-fold (the wrong way) | 0.8004 ± 0.0048 |
+| expanding time folds with 1-day gap | 0.6066 ± 0.0201 |
+| untouched time holdout (last 20%) | 0.5932 |
+
+**Optimism gap of a random split: +0.2071 PR-AUC.**
 <!-- validation:end -->
+
+![optimism gap](figures/optimism_gap.png)
+
+![adversarial validation](figures/adversarial_top_features.png)
 
 The gap is the amount by which a random split would have overstated the model's
 performance. It is the single number I would put in front of a stakeholder who
