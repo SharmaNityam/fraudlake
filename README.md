@@ -54,6 +54,15 @@ Detailed numbers, operating point and limitations: [`docs/model_card.md`](docs/m
 Why the random-split number is not real: [`docs/validation_strategy.md`](docs/validation_strategy.md).
 Every engineered feature and its leakage guarantee: [`docs/feature_catalog.md`](docs/feature_catalog.md).
 
+## Five-minute tour for reviewers
+
+1. [`sql/110_fct_velocity.sql`](sql/110_fct_velocity.sql) — window frames that end one second before the current row, and a `LATERAL` for distinct-count-in-window. Compare with the Spark version in [`src/fraudlake/ingest/silver.py`](src/fraudlake/ingest/silver.py) and the parity test in [`tests/test_sql_marts.py`](tests/test_sql_marts.py).
+2. [`src/fraudlake/modeling/splits.py`](src/fraudlake/modeling/splits.py) — the time holdout and gapped expanding folds, with the reasoning in the module docstring.
+3. [`src/fraudlake/features/selection.py`](src/fraudlake/features/selection.py) — adversarial validation and the other four filters; every drop gets a reason.
+4. [`src/fraudlake/features/encoders.py`](src/fraudlake/features/encoders.py) — out-of-fold target encoding, and [`tests/test_encoders.py`](tests/test_encoders.py) proving a row never sees its own label.
+5. [`docs/model_card.md`](docs/model_card.md) — generated, not typed: holdout metrics with CIs, operating point, what the model uses, limitations.
+6. [`notebooks/02_validation_design.ipynb`](notebooks/02_validation_design.ipynb) — card overlap under each split scheme and the optimism gap, on the real data.
+
 ## Quickstart
 
 Requirements: Python 3.12, Java 17 (for Spark), Docker, [`uv`](https://docs.astral.sh/uv/). On macOS LightGBM also needs `brew install libomp`.
