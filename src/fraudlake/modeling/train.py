@@ -222,7 +222,9 @@ def run_training(
                 f"(importance stability ρ={stability:.2f})[/]"
             )
 
-    (settings.artifacts_dir / "models" / "cv_summary.json").write_text(
-        json.dumps(summary, indent=2, default=str)
-    )
+    # merge with any earlier invocation so models can be tuned in separate runs
+    path = settings.artifacts_dir / "models" / "cv_summary.json"
+    merged = json.loads(path.read_text()) if path.exists() else {}
+    merged.update(summary)
+    path.write_text(json.dumps(merged, indent=2, default=str))
     return summary
