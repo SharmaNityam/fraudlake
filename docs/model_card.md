@@ -1,6 +1,6 @@
 # Model card — fraudlake fraud scorer
 
-Generated 2026-09-03 14:12 UTC by `fraudlake report`. Registry version `v1`, git `746b5e3`, MLflow run `3312f60d094e40479dca8005a3ffa7c5`.
+Generated 2026-09-04 21:10 UTC by `fraudlake report`. Registry version `v2`, git `46fba25`, MLflow run `34625b522fb34762a9e43b5184415026`.
 
 ## Intended use
 
@@ -15,34 +15,34 @@ Rank card-not-present e-commerce transactions by probability of fraud so a revie
 ## Model
 
 - Family: `lightgbm` chosen by time-fold CV PR-AUC **before** the holdout was opened
-- CV PR-AUC 0.6066 ± 0.0201 over 5 expanding folds with a 24h gap
+- CV PR-AUC 0.6127 ± 0.0192 over 5 expanding folds with a 24h gap
 - Fold-to-fold importance stability (Spearman ρ): 0.94
-- Optuna trials: 9; final trees: 929
+- Optuna trials: 20; final trees: 746
 
 ## Holdout performance
 
 | model | CV PR-AUC (time folds) | holdout PR-AUC | holdout ROC-AUC | precision@1% | recall@1% FPR |
 |---|---|---|---|---|---|
-| **lightgbm** (selected) | 0.6066 ± 0.0201 | 0.5932 [0.5768, 0.6078] | 0.9251 | 0.915 | 0.504 |
-| xgboost | 0.6003 ± 0.0197 | 0.6020 | 0.9163 | 0.924 | 0.529 |
+| **lightgbm** (selected) | 0.6127 ± 0.0192 | 0.5866 [0.5697, 0.6011] | 0.9240 | 0.900 | 0.498 |
+| xgboost | 0.6064 ± 0.0213 | 0.6005 | 0.9219 | 0.919 | 0.522 |
 | catboost | 0.5948 ± 0.0181 | 0.5672 | 0.9151 | 0.896 | 0.492 |
 | rf | 0.5295 ± 0.0255 | 0.5257 | 0.9073 | 0.872 | 0.450 |
 
-Bootstrap 95% CI (n=1000): PR-AUC [0.5768, 0.6078], ROC-AUC [0.9204, 0.9300]. Brier 0.0204.
+Bootstrap 95% CI (n=1000): PR-AUC [0.5697, 0.6011], ROC-AUC [0.9192, 0.9287]. Brier 0.0201.
 
 ### Operating point
 
-With a missed fraud costing 100 units and a manual review 5, the cost-optimal threshold is **0.0834**: flag 10.17% of traffic, precision 25.7%, recall 76.8%, expected cost 65.7% below the flag-nothing baseline.
+With a missed fraud costing 100 units and a manual review 5, the cost-optimal threshold is **0.0502**: flag 10.75% of traffic, precision 24.6%, recall 77.7%, expected cost 65.8% below the flag-nothing baseline.
 
 ## Validation strategy
 
 | validation scheme | PR-AUC |
 |---|---|
-| shuffled stratified K-fold (the wrong way) | 0.8004 ± 0.0048 |
-| expanding time folds with 1-day gap | 0.6066 ± 0.0201 |
-| untouched time holdout (last 20%) | 0.5932 |
+| shuffled stratified K-fold (the wrong way) | 0.7871 ± 0.0051 |
+| expanding time folds with 1-day gap | 0.6127 ± 0.0192 |
+| untouched time holdout (last 20%) | 0.5866 |
 
-**Optimism gap of a random split: +0.2071 PR-AUC.**
+**Optimism gap of a random split: +0.2005 PR-AUC.**
 
 See `docs/validation_strategy.md` for why the random split number is not real.
 
@@ -62,21 +62,21 @@ Adversarial validation AUC (train window vs holdout window): 0.998 before droppi
 
 | feature | mean abs SHAP |
 |---|---|
-| `c13` | 0.3230 |
-| `v69` | 0.1782 |
-| `transaction_amt` | 0.1778 |
-| `card1_freq` | 0.1712 |
-| `c14` | 0.1250 |
-| `d2` | 0.1173 |
-| `d4` | 0.1143 |
-| `c1` | 0.1121 |
-| `v294` | 0.1087 |
-| `card2_freq` | 0.0989 |
-| `c11` | 0.0935 |
-| `card1` | 0.0904 |
-| `c5` | 0.0898 |
-| `m4_freq` | 0.0886 |
-| `p_emaildomain_freq` | 0.0804 |
+| `c13` | 0.2145 |
+| `v69` | 0.1357 |
+| `card1_freq` | 0.1182 |
+| `transaction_amt` | 0.1135 |
+| `d2` | 0.1124 |
+| `c5` | 0.1022 |
+| `c14` | 0.1005 |
+| `amt_log` | 0.0827 |
+| `c11` | 0.0803 |
+| `v294` | 0.0760 |
+| `d4` | 0.0752 |
+| `card6_te` | 0.0719 |
+| `c1` | 0.0711 |
+| `v49` | 0.0698 |
+| `m4_freq` | 0.0693 |
 
 ## Limitations
 

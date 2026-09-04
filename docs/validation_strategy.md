@@ -68,11 +68,11 @@ side:
 <!-- validation:start -->
 | validation scheme | PR-AUC |
 |---|---|
-| shuffled stratified K-fold (the wrong way) | 0.8004 ± 0.0048 |
-| expanding time folds with 1-day gap | 0.6066 ± 0.0201 |
-| untouched time holdout (last 20%) | 0.5932 |
+| shuffled stratified K-fold (the wrong way) | 0.7871 ± 0.0051 |
+| expanding time folds with 1-day gap | 0.6127 ± 0.0192 |
+| untouched time holdout (last 20%) | 0.5866 |
 
-**Optimism gap of a random split: +0.2071 PR-AUC.**
+**Optimism gap of a random split: +0.2005 PR-AUC.**
 <!-- validation:end -->
 
 ![optimism gap](figures/optimism_gap.png)
